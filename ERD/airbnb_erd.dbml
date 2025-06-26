@@ -1,0 +1,126 @@
+// ===========================================
+// ALX AIRBNB DATABASE - ENTITY RELATIONSHIP DIAGRAM
+// ===========================================
+// Project: ALX Airbnb Database Module
+// Task: ERD Design and Implementation
+// Normalization Level: Third Normal Form (3NF)
+// ===========================================
+
+// USER MANAGEMENT
+// Handles all user types: guests, hosts, and admins
+Table User {
+  user_id uuid [primary key, note: 'Unique identifier for users']
+  first_name varchar [not null, note: 'User first name']
+  last_name varchar [not null, note: 'User last name']
+  email varchar [unique, not null, note: 'Unique email address']
+  password_hash varchar [not null, note: 'Encrypted password']
+  phone_number varchar [note: 'Optional contact number']
+  role user_role [not null, note: 'User access level']
+  created_at timestamp [default: `now()`, note: 'Account creation timestamp']
+  
+  Note: 'Central user entity supporting multi-role access control'
+}
+
+// PROPERTY MANAGEMENT
+// Rental properties listed by hosts
+Table Property {
+  property_id uuid [primary key, note: 'Unique property identifier']
+  host_id uuid [ref: > User.user_id, not null, note: 'Property owner reference']
+  name varchar [not null, note: 'Property display name']
+  description text [not null, note: 'Detailed property description']
+  location varchar [not null, note: 'Property address/location']
+  price_per_night decimal [not null, note: 'Nightly rental rate']
+  created_at timestamp [default: `now()`, note: 'Listing creation date']
+  updated_at timestamp [note: 'Last modification timestamp']
+  
+  Note: 'Property listings with host ownership tracking'
+}
+
+// RESERVATION MANAGEMENT
+// Guest bookings and reservation handling
+Table Booking {
+  booking_id uuid [primary key, note: 'Unique booking identifier']
+  property_id uuid [ref: > Property.property_id, not null, note: 'Reserved property']
+  user_id uuid [ref: > User.user_id, not null, note: 'Guest making reservation']
+  start_date date [not null, note: 'Check-in date']
+  end_date date [not null, note: 'Check-out date']
+  total_price decimal [not null, note: 'Total booking cost']
+  status booking_status [not null, note: 'Current booking state']
+  created_at timestamp [default: `now()`, note: 'Booking creation timestamp']
+  
+  Note: 'Reservation system linking guests to properties'
+}
+
+// FINANCIAL TRANSACTIONS
+// Payment processing for confirmed bookings
+Table Payment {
+  payment_id uuid [primary key, note: 'Unique payment identifier']
+  booking_id uuid [ref: - Booking.booking_id, not null, note: 'Associated booking (1:1)']
+  amount decimal [not null, note: 'Payment amount']
+  payment_date timestamp [default: `now()`, note: 'Transaction timestamp']
+  payment_method payment_method [not null, note: 'Payment processing method']
+  
+  Note: 'Financial transaction records with booking linkage'
+}
+
+// FEEDBACK SYSTEM
+// User reviews and ratings for properties
+Table Review {
+  review_id uuid [primary key, note: 'Unique review identifier']
+  property_id uuid [ref: > Property.property_id, not null, note: 'Reviewed property']
+  user_id uuid [ref: > User.user_id, not null, note: 'Review author']
+  rating integer [not null, note: '1-5 star rating system']
+  comment text [not null, note: 'Written review content']
+  created_at timestamp [default: `now()`, note: 'Review submission date']
+  
+  Note: 'Quality assurance through user feedback system'
+}
+
+// COMMUNICATION SYSTEM
+// Internal messaging between users
+Table Message {
+  message_id uuid [primary key, note: 'Unique message identifier']
+  sender_id uuid [ref: > User.user_id, not null, note: 'Message sender']
+  recipient_id uuid [ref: > User.user_id, not null, note: 'Message recipient']
+  message_body text [not null, note: 'Message content']
+  sent_at timestamp [default: `now()`, note: 'Message timestamp']
+  
+  Note: 'User-to-user communication system'
+}
+
+// ===========================================
+// ENUMERATED DATA TYPES
+// ===========================================
+
+// User access control levels
+Enum user_role {
+  guest    [note: 'Standard user - can book properties']
+  host     [note: 'Property owner - can list properties']
+  admin    [note: 'System administrator - full access']
+}
+
+// Booking lifecycle states
+Enum booking_status {
+  pending    [note: 'Awaiting confirmation']
+  confirmed  [note: 'Booking approved and active']
+  canceled   [note: 'Booking terminated']
+}
+
+// Supported payment methods
+Enum payment_method {
+  credit_card [note: 'Credit/debit card processing']
+  paypal      [note: 'PayPal payment gateway']
+  stripe      [note: 'Stripe payment processing']
+}
+
+// ===========================================
+// BUSINESS RULES & CONSTRAINTS
+// ===========================================
+// 1. Each property must have exactly one host (User with role='host')
+// 2. Each booking must have exactly one payment (1:1 relationship)
+// 3. Users can have multiple roles but enum enforces single role per record
+// 4. Review ratings must be validated between 1-5 (application level)
+// 5. Email addresses must be unique across all users
+// 6. Booking dates must be validated (start_date < end_date)
+// 7. Messages create self-referential relationships within User table
+// ===========================================
