@@ -17,6 +17,42 @@
 -- 6. Message table: sender_id/receiver_id (joins), sent_at (sorting)
 
 -- ===============================================
+-- PERFORMANCE TESTING - BEFORE INDEX CREATION
+-- ===============================================
+
+-- Test Query 1: User login by email (BEFORE indexing)
+EXPLAIN ANALYZE
+SELECT user_id, first_name, last_name, role 
+FROM User 
+WHERE email = 'user12345@example.com';
+
+-- Test Query 2: Booking history for a user (BEFORE indexing)
+EXPLAIN ANALYZE
+SELECT u.first_name, u.last_name, b.booking_id, b.start_date, b.total_price
+FROM User u
+INNER JOIN Booking b ON u.user_id = b.user_id
+WHERE u.user_id = 12345
+ORDER BY b.created_at DESC;
+
+-- Test Query 3: Properties by location and price (BEFORE indexing)
+EXPLAIN ANALYZE
+SELECT p.property_id, p.name, p.location, p.price_per_night
+FROM Property p
+WHERE p.location = 'New York' 
+  AND p.price_per_night BETWEEN 100 AND 300
+ORDER BY p.price_per_night ASC;
+
+-- Test Query 4: Property bookings in date range (BEFORE indexing)
+EXPLAIN ANALYZE
+SELECT p.property_id, p.name, COUNT(b.booking_id) as booking_count
+FROM Property p
+LEFT JOIN Booking b ON p.property_id = b.property_id
+WHERE b.start_date >= '2024-01-01' 
+  AND b.end_date <= '2024-12-31'
+GROUP BY p.property_id, p.name
+ORDER BY booking_count DESC;
+
+-- ===============================================
 -- USER TABLE INDEXES
 -- ===============================================
 
@@ -165,6 +201,73 @@ CREATE INDEX idx_property_location_lower ON Property(LOWER(location));
 CREATE INDEX idx_user_email_lower ON User(LOWER(email));
 
 -- ===============================================
+-- PERFORMANCE TESTING - AFTER INDEX CREATION
+-- ===============================================
+
+-- Update table statistics after creating indexes
+ANALYZE User;
+ANALYZE Booking;
+ANALYZE Property;
+ANALYZE Review;
+ANALYZE Payment;
+ANALYZE Message;
+
+-- Test Query 1: User login by email (AFTER indexing)
+EXPLAIN ANALYZE
+SELECT user_id, first_name, last_name, role 
+FROM User 
+WHERE email = 'user12345@example.com';
+
+-- Test Query 2: Booking history for a user (AFTER indexing)
+EXPLAIN ANALYZE
+SELECT u.first_name, u.last_name, b.booking_id, b.start_date, b.total_price
+FROM User u
+INNER JOIN Booking b ON u.user_id = b.user_id
+WHERE u.user_id = 12345
+ORDER BY b.created_at DESC;
+
+-- Test Query 3: Properties by location and price (AFTER indexing)
+EXPLAIN ANALYZE
+SELECT p.property_id, p.name, p.location, p.price_per_night
+FROM Property p
+WHERE p.location = 'New York' 
+  AND p.price_per_night BETWEEN 100 AND 300
+ORDER BY p.price_per_night ASC;
+
+-- Test Query 4: Property bookings in date range (AFTER indexing)
+EXPLAIN ANALYZE
+SELECT p.property_id, p.name, COUNT(b.booking_id) as booking_count
+FROM Property p
+LEFT JOIN Booking b ON p.property_id = b.property_id
+WHERE b.start_date >= '2024-01-01' 
+  AND b.end_date <= '2024-12-31'
+GROUP BY p.property_id, p.name
+ORDER BY booking_count DESC;
+
+-- Test Query 5: Review analysis by property (AFTER indexing)
+EXPLAIN ANALYZE
+SELECT p.property_id, p.name, AVG(r.rating) as avg_rating, COUNT(r.review_id) as review_count
+FROM Property p
+LEFT JOIN Review r ON p.property_id = r.property_id
+WHERE p.location = 'New York'
+GROUP BY p.property_id, p.name
+HAVING AVG(r.rating) >= 4.0
+ORDER BY avg_rating DESC;
+
+-- Test Query 6: Payment analysis by date range (AFTER indexing)
+EXPLAIN ANALYZE
+SELECT 
+    DATE_TRUNC('month', payment_date) as month,
+    payment_method,
+    COUNT(*) as payment_count,
+    SUM(amount) as total_amount
+FROM Payment
+WHERE payment_date >= '2024-01-01' 
+  AND payment_date <= '2024-12-31'
+GROUP BY DATE_TRUNC('month', payment_date), payment_method
+ORDER BY month DESC, total_amount DESC;
+
+-- ===============================================
 -- INDEXES FOR FULL-TEXT SEARCH (if supported)
 -- ===============================================
 
@@ -178,37 +281,27 @@ CREATE INDEX idx_user_email_lower ON User(LOWER(email));
 -- ===============================================
 
 -- Query to check index usage statistics
--- SELECT 
---     schemaname,
---     tablename,
---     attname,
---     n_distinct,
---     correlation
--- FROM pg_stats 
--- WHERE tablename IN ('User', 'Booking', 'Property', 'Review', 'Payment', 'Message');
+EXPLAIN ANALYZE
+SELECT 
+    schemaname,
+    tablename,
+    attname,
+    n_distinct,
+    correlation
+FROM pg_stats 
+WHERE tablename IN ('User', 'Booking', 'Property', 'Review', 'Payment', 'Message');
 
 -- Query to monitor index size and usage
--- SELECT 
---     indexname,
---     idx_scan,
---     idx_tup_read,
---     idx_tup_fetch,
---     pg_size_pretty(pg_relation_size(indexrelid)) as size
--- FROM pg_stat_user_indexes 
--- WHERE schemaname = 'public'
--- ORDER BY idx_scan DESC;
-
--- ===============================================
--- MAINTENANCE COMMANDS
--- ===============================================
-
--- Analyze tables after creating indexes to update statistics
-ANALYZE User;
-ANALYZE Booking;
-ANALYZE Property;
-ANALYZE Review;
-ANALYZE Payment;
-ANALYZE Message;
+EXPLAIN ANALYZE
+SELECT 
+    indexname,
+    idx_scan,
+    idx_tup_read,
+    idx_tup_fetch,
+    pg_size_pretty(pg_relation_size(indexrelid)) as size
+FROM pg_stat_user_indexes 
+WHERE schemaname = 'public'
+ORDER BY idx_scan DESC;
 
 -- ===============================================
 -- INDEX CLEANUP (if needed)
