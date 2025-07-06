@@ -18,9 +18,9 @@ SELECT
     p.id AS property_id,
     p.name AS property_name,
     p.location,
-    r.id AS review_id,
-    r.rating,
-    r.comment
+    COALESCE(r.id, NULL) AS review_id,
+    COALESCE(r.rating, NULL) AS rating,
+    COALESCE(r.comment, NULL) AS comment
 FROM 
     Property p
 LEFT JOIN 
@@ -40,3 +40,13 @@ FROM
     Users u
 FULL OUTER JOIN 
     Booking b ON u.id = b.user_id;
+-- 4. CROSS JOIN: Retrieve a Cartesian product of all properties and all users
+SELECT 
+    p.id AS property_id,
+    p.name AS property_name,
+    u.id AS user_id,
+    u.name AS user_name
+FROM 
+    Property p
+CROSS JOIN 
+    Users u;
