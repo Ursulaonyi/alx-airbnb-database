@@ -1,56 +1,97 @@
-# 🧠 Complex SQL Joins - Airbnb Database
+# Complex Queries with Joins
 
-This submodule contains advanced SQL queries demonstrating the use of different join operations on the ALX Airbnb database schema.
+## Overview
+This task demonstrates mastery of SQL joins by implementing three different types of joins to retrieve data from the AirBnB database schema. Each query serves a specific purpose and showcases different join behaviors.
 
-## 📌 Task Objective
+## Queries Implemented
 
-**Goal**: Master SQL joins by writing complex queries using different types of joins.
+### 1. INNER JOIN Query
+**Purpose**: Retrieve all bookings with their respective users who made those bookings.
 
-### ✅ Queries Included
+**Query Type**: `INNER JOIN`
 
-1. **INNER JOIN**  
-   Retrieves all bookings along with the user who made each booking. Excludes bookings without an associated user.
+**Tables Involved**: 
+- `Booking` (b)
+- `User` (u)
 
-2. **LEFT JOIN**  
-   Retrieves all properties along with any reviews they have. Includes properties even if no reviews exist.
+**Join Condition**: `b.user_id = u.user_id`
 
-3. **FULL OUTER JOIN**  
-   Retrieves all users and all bookings, even if the user has no booking or a booking isn't linked to a user.
+**Result**: Returns only bookings that have a corresponding user record. This excludes any orphaned bookings (if any exist) that don't have a valid user_id reference.
 
-## 📂 Files
+**Use Case**: Perfect for generating booking reports with guest details, ensuring data integrity by only showing complete booking-user relationships.
 
-- `joins_queries.sql`: Contains all three SQL queries using INNER JOIN, LEFT JOIN, and FULL OUTER JOIN.
-- `README.md`: This file.
+### 2. LEFT JOIN Query
+**Purpose**: Retrieve all properties and their reviews, including properties that have no reviews.
 
-## 🔧 Prerequisites
+**Query Type**: `LEFT JOIN`
 
-- PostgreSQL 12+
-- Properly set up Airbnb schema with the following tables:
-  - `Users`
-  - `Booking`
-  - `Property`
-  - `Review`
+**Tables Involved**:
+- `Property` (p) - Left table
+- `Review` (r) - Right table
 
-## ▶️ Run Queries
+**Join Condition**: `p.property_id = r.property_id`
 
-To run the queries:
+**Result**: Returns all properties, regardless of whether they have reviews or not. Properties without reviews will show NULL values for review columns.
 
-```bash
-psql -U your_user -d your_database -f joins_queries.sql
+**Use Case**: Essential for property analysis, allowing hosts to see all their properties including those that haven't received reviews yet.
 
+### 3. FULL OUTER JOIN Query
+**Purpose**: Retrieve all users and all bookings, even if the user has no booking or a booking is not linked to a user.
 
-## ✅ Output Expectations
+**Query Type**: `FULL OUTER JOIN`
 
-You should see result sets showing:
+**Tables Involved**:
+- `User` (u)
+- `Booking` (b)
 
-- **User and booking pairs** (INNER JOIN)
-- **All properties with or without reviews** (LEFT JOIN)
-- **A combined view of all users and all bookings** (FULL OUTER JOIN)
+**Join Condition**: `u.user_id = b.user_id`
 
----
+**Result**: Returns all users and all bookings. Users without bookings will show NULL values for booking columns, and bookings without valid users will show NULL values for user columns.
 
-## 🎓 Learn More
+**Use Case**: Comprehensive data analysis to identify users who haven't made bookings and potentially orphaned booking records.
 
-This task is part of the **"Unleashing Advanced Querying Power"** module of the **ALX Airbnb Database Project**.
+## Additional Complex Query
+The file also includes a bonus query that demonstrates joining multiple tables:
+- `Booking` ↔ `User` (guest information)
+- `Booking` ↔ `Property` (property details)
+- `Property` ↔ `User` (host information)
 
-## 🌟 Enjoy your AirBnB database!
+This query provides a complete view of confirmed bookings with guest, property, and host details.
+
+## Key Learning Points
+
+### Join Types Comparison
+| Join Type | Returns | Use Case |
+|-----------|---------|----------|
+| INNER JOIN | Only matching records from both tables | When you need complete data relationships |
+| LEFT JOIN | All records from left table + matching from right | When you need all records from primary table |
+| FULL OUTER JOIN | All records from both tables | When you need comprehensive data analysis |
+
+### Performance Considerations
+- **INNER JOIN**: Generally fastest as it has the smallest result set
+- **LEFT JOIN**: Moderate performance, depends on the size of the left table
+- **FULL OUTER JOIN**: Potentially slowest as it returns the largest result set
+
+### Data Integrity Insights
+- INNER JOINs help identify clean, complete relationships
+- LEFT JOINs reveal missing related data (e.g., properties without reviews)
+- FULL OUTER JOINs expose orphaned records and data gaps
+
+## Database Schema Assumptions
+Based on the AirBnB database structure:
+- `User` table contains both guests and hosts (differentiated by role)
+- `Booking` table has foreign key reference to `User` (guest)
+- `Property` table has foreign key reference to `User` (host)
+- `Review` table has foreign key reference to `Property`
+
+## Usage Instructions
+1. Ensure your PostgreSQL database is set up with the AirBnB schema
+2. Execute the queries in order to understand different join behaviors
+3. Analyze the result sets to understand how each join type handles missing relationships
+4. Use EXPLAIN ANALYZE to understand query performance characteristics
+
+## Notes
+- All queries include proper column aliases for clarity
+- Results are ordered by relevant timestamps for better readability
+- The queries handle NULL values appropriately for outer joins
+- Comments explain the purpose and expected behavior of each query

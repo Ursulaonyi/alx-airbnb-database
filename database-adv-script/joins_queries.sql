@@ -1,52 +1,98 @@
--- 1. INNER JOIN: Retrieve all bookings and the respective users who made those bookings
+-- Task 0: Complex Queries with Joins
+-- ALX AirBnB Database Advanced Script
+
+-- Query 1: INNER JOIN to retrieve all bookings and their respective users
+-- This query combines booking data with user information for guests who made bookings
 SELECT 
-    b.id AS booking_id,
+    b.booking_id,
     b.property_id,
-    b.user_id,
-    u.name AS user_name,
-    u.email AS user_email,
     b.start_date,
     b.end_date,
-    b.status
+    b.total_price,
+    b.status,
+    b.created_at AS booking_created_at,
+    u.user_id,
+    u.first_name,
+    u.last_name,
+    u.email,
+    u.phone_number,
+    u.role
 FROM 
     Booking b
 INNER JOIN 
-    Users u ON b.user_id = u.id;
+    User u ON b.user_id = u.user_id
+ORDER BY 
+    b.created_at DESC;
 
--- 2. LEFT JOIN: Retrieve all properties and their reviews, including properties that have no reviews
+-- Query 2: LEFT JOIN to retrieve all properties and their reviews (including properties with no reviews)
+-- This query shows all properties whether they have reviews or not
 SELECT 
-    p.id AS property_id,
+    p.property_id,
+    p.host_id,
     p.name AS property_name,
+    p.description,
     p.location,
-    COALESCE(r.id, NULL) AS review_id,
-    COALESCE(r.rating, NULL) AS rating,
-    COALESCE(r.comment, NULL) AS comment
+    p.price_per_night,
+    p.created_at AS property_created_at,
+    r.review_id,
+    r.user_id AS reviewer_id,
+    r.rating,
+    r.comment,
+    r.created_at AS review_created_at
 FROM 
     Property p
 LEFT JOIN 
-    Review r ON p.id = r.property_id;
+    Review r ON p.property_id = r.property_id
+ORDER BY 
+    p.property_id, r.created_at DESC;
 
--- 3. FULL OUTER JOIN: Retrieve all users and all bookings, even if the user has no booking or a booking is not linked to a user
+-- Query 3: FULL OUTER JOIN to retrieve all users and all bookings
+-- This query shows all users and all bookings, even if user has no bookings or booking has no linked user
 SELECT 
-    u.id AS user_id,
-    u.name AS user_name,
-    u.email AS user_email,
-    b.id AS booking_id,
+    u.user_id,
+    u.first_name,
+    u.last_name,
+    u.email,
+    u.role,
+    u.created_at AS user_created_at,
+    b.booking_id,
     b.property_id,
     b.start_date,
     b.end_date,
-    b.status
+    b.total_price,
+    b.status AS booking_status,
+    b.created_at AS booking_created_at
 FROM 
-    Users u
+    User u
 FULL OUTER JOIN 
-    Booking b ON u.id = b.user_id;
--- 4. CROSS JOIN: Retrieve a Cartesian product of all properties and all users
+    Booking b ON u.user_id = b.user_id
+ORDER BY 
+    u.user_id, b.created_at DESC;
+
+-- Additional Query: Complex join with multiple tables for comprehensive booking information
+-- This demonstrates a more complex scenario joining multiple related tables
 SELECT 
-    p.id AS property_id,
+    b.booking_id,
+    b.start_date,
+    b.end_date,
+    b.total_price,
+    b.status,
+    u.first_name || ' ' || u.last_name AS guest_name,
+    u.email AS guest_email,
     p.name AS property_name,
-    u.id AS user_id,
-    u.name AS user_name
+    p.location,
+    p.price_per_night,
+    h.first_name || ' ' || h.last_name AS host_name,
+    h.email AS host_email
 FROM 
-    Property p
-CROSS JOIN 
-    Users u;
+    Booking b
+INNER JOIN 
+    User u ON b.user_id = u.user_id
+INNER JOIN 
+    Property p ON b.property_id = p.property_id
+INNER JOIN 
+    User h ON p.host_id = h.user_id
+WHERE 
+    b.status = 'confirmed'
+ORDER BY 
+    b.start_date DESC;
