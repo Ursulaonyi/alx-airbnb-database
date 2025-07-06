@@ -95,3 +95,153 @@ Based on the AirBnB database structure:
 - Results are ordered by relevant timestamps for better readability
 - The queries handle NULL values appropriately for outer joins
 - Comments explain the purpose and expected behavior of each query
+
+
+# Subqueries
+
+## Overview
+This task demonstrates mastery of SQL subqueries by implementing both non-correlated and correlated subqueries. Subqueries are powerful tools for complex data retrieval and analysis, allowing us to nest queries within queries for sophisticated filtering and calculations.
+
+## Queries Implemented
+
+### 1. Non-Correlated Subquery: Properties with Average Rating > 4.0
+
+**Purpose**: Find all properties where the average rating is greater than 4.0 using a subquery.
+
+**Query Type**: Non-correlated subquery with `IN` operator
+
+**Key Features**:
+- **Inner subquery**: Calculates average rating per property using `GROUP BY` and `HAVING`
+- **Outer query**: Retrieves property details for properties with high ratings
+- **Independence**: The subquery can run independently of the outer query
+
+**Alternative Implementation**: Also provided using `EXISTS` operator for potentially better performance in large datasets.
+
+**Business Value**: Helps identify high-quality properties for featured listings or premium recommendations.
+
+### 2. Correlated Subquery: Users with More Than 3 Bookings
+
+**Purpose**: Find users who have made more than 3 bookings using a correlated subquery.
+
+**Query Type**: Correlated subquery with `COUNT` function
+
+**Key Features**:
+- **Correlation**: The subquery references `u.user_id` from the outer query
+- **Dynamic filtering**: Each user's booking count is calculated individually
+- **Performance**: Executes for each row in the outer query
+
+**Enhanced Version**: Includes additional booking statistics (total bookings, confirmed bookings) for comprehensive user analysis.
+
+**Business Value**: Identifies loyal customers for VIP programs or targeted marketing campaigns.
+
+## Additional Advanced Subqueries
+
+### 3. Complex Nested Subquery: Properties with Above-Average Location Ratings
+
+**Purpose**: Find properties that perform better than the average for their location.
+
+**Technique**: Multiple correlated subqueries comparing property ratings to location averages.
+
+**Business Value**: Helps identify standout properties within specific markets.
+
+### 4. Time-Based Correlated Subquery: Recent Active Users
+
+**Purpose**: Find users with bookings in the last 30 days.
+
+**Technique**: Date-based filtering using `CURRENT_DATE` and `INTERVAL`.
+
+**Business Value**: Identifies recently active users for engagement campaigns.
+
+### 5. Negative Correlated Subquery: Properties Without Reviews
+
+**Purpose**: Find properties that have no reviews.
+
+**Technique**: `NOT EXISTS` to identify missing relationships.
+
+**Business Value**: Helps identify properties needing review encouragement.
+
+## Subquery Types Comparison
+
+| Subquery Type | Execution | Performance | Use Case |
+|---------------|-----------|-------------|----------|
+| **Non-Correlated** | Once, independently | Generally faster | Fixed filtering criteria |
+| **Correlated** | Once per outer row | Can be slower | Dynamic, row-dependent filtering |
+| **EXISTS** | Stops at first match | Efficient for existence checks | Boolean conditions |
+| **IN** | Compares all values | Good for small result sets | Membership testing |
+
+## Performance Considerations
+
+### Non-Correlated Subqueries
+- **Advantages**: Execute only once, can be cached
+- **Best for**: Large datasets with simple filtering
+- **Optimization**: Can often be converted to JOINs for better performance
+
+### Correlated Subqueries
+- **Advantages**: More flexible, can access outer query data
+- **Challenges**: Execute repeatedly, potentially slower
+- **Optimization**: Use indexes on correlated columns
+
+## Query Execution Analysis
+
+### Query 1 Performance Tips:
+```sql
+-- Create index for better performance
+CREATE INDEX idx_review_property_rating ON Review(property_id, rating);
+```
+
+### Query 2 Performance Tips:
+```sql
+-- Create index for correlated subquery
+CREATE INDEX idx_booking_user_id ON Booking(user_id);
+```
+
+## Real-World Applications
+
+### Property Management
+- **High-rated properties**: Featured listings, premium placement
+- **Location analysis**: Market positioning, competitive analysis
+- **Review gaps**: Properties needing attention
+
+### User Analytics
+- **Loyalty programs**: Frequent bookers identification
+- **Engagement tracking**: Recent activity monitoring
+- **Customer segmentation**: Booking behavior analysis
+
+## SQL Best Practices Demonstrated
+
+1. **Proper aliasing**: Clear table aliases for readability
+2. **Logical ordering**: Results sorted by relevant criteria
+3. **Efficient filtering**: Using appropriate subquery types
+4. **Documentation**: Comments explaining complex logic
+5. **Alternative approaches**: Multiple solutions for comparison
+
+## Database Schema Dependencies
+
+The queries assume the following relationships:
+- `Property` ↔ `Review` (one-to-many)
+- `User` ↔ `Booking` (one-to-many)
+- `Property.location` for geographical grouping
+- Timestamp fields for temporal analysis
+
+## Usage Instructions
+
+1. **Sequential execution**: Run queries in order to understand progression
+2. **Performance monitoring**: Use `EXPLAIN ANALYZE` to compare execution plans
+3. **Index optimization**: Create suggested indexes for better performance
+4. **Data validation**: Verify results against expected business logic
+
+## Learning Outcomes
+
+After completing this task, you should understand:
+- When to use correlated vs non-correlated subqueries
+- Performance implications of different subquery types
+- How to write complex nested queries
+- Real-world applications of subquery patterns
+- Optimization strategies for subquery performance
+
+## Notes
+- All queries handle NULL values appropriately
+- Results are ordered for consistent output
+- Comments explain the business logic behind each query
+- Alternative implementations provided for comparison
+- Performance considerations documented for production use
